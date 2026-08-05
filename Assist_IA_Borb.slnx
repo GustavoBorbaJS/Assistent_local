@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="Assist_IA_Borb.Core/Assist_IA_Borb.Core.csproj" />
+  <Project Path="Assist_IA_Borb.Handlers/Assist_IA_Borb.Handlers.csproj" />
+  <Project Path="Assist_IA_Borb.Proxy/Assist_IA_Borb.Proxy.csproj" />
+  <Project Path="Assist_IA_Borb.Speech/Assist_IA_Borb.Speech.csproj" />
+  <Project Path="Assist_IA_Borb.UI/Assist_IA_Borb.UI.csproj" />
+</Solution>

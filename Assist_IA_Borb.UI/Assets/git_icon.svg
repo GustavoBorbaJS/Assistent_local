@@ -1,0 +1,11 @@
+<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Ícone genérico de controle de versão (não é o logotipo oficial do Git) -->
+  <g fill="none" stroke="#2E3A66" stroke-width="16" stroke-linecap="round">
+    <line x1="140" y1="110" x2="140" y2="290" />
+    <path d="M140 200 C140 160, 200 160, 260 150" />
+  </g>
+
+  <circle cx="140" cy="90" r="30" fill="#4A69C9" stroke="#2E3A66" stroke-width="10"/>
+  <circle cx="140" cy="300" r="30" fill="#4A69C9" stroke="#2E3A66" stroke-width="10"/>
+  <circle cx="272" cy="140" r="30" fill="#54D48A" stroke="#1E4B31" stroke-width="10"/>
+</svg>

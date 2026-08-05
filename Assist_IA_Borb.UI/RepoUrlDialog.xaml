@@ -1,0 +1,33 @@
+<Window x:Class="Assist_IA_Borb.UI.RepoUrlDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Conectar a um repositório do GitHub"
+        Width="440"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        Background="#F4F6FB">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Text="Esse projeto ainda não está conectado a nenhum repositório."
+                   FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,0,0,4" />
+        <TextBlock Grid.Row="1"
+                   Text="Cole a URL do repositório do GitHub pra conectar e enviar (ou deixe como está se a sugestão estiver certa):"
+                   FontSize="11" Foreground="#666" TextWrapping="Wrap" Margin="0,0,0,12" />
+
+        <TextBox x:Name="UrlTextBox" Grid.Row="2" Padding="8,6" FontSize="13" />
+
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="Cancelar" Width="90" Height="32" Margin="0,0,8,0" Click="CancelButton_Click" />
+            <Button Content="Conectar e enviar" Width="130" Height="32" Background="#4A69C9" Foreground="White"
+                    BorderThickness="0" Click="ConfirmButton_Click" />
+        </StackPanel>
+    </Grid>
+</Window>

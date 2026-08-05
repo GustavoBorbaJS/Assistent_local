@@ -1,0 +1,221 @@
+<Window x:Class="Assist_IA_Borb.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Assist_IA_Borb"
+        Width="500" Height="170"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        WindowStartupLocation="Manual">
+
+    <Window.Resources>
+
+        <!--
+            Estilo base para os botões-ícone (robô, teclado): remove o "chrome" padrão
+            do WPF (o retângulo cinza/branco que ele desenha atrás de qualquer botão
+            por padrão) e troca por um fundo 100% transparente em repouso, com um
+            leve destaque translúcido arredondado ao passar o mouse - visual "glass"
+            mais próximo do que se vê em apps atuais, sem cantos quadrados.
+        -->
+        <Style x:Key="IconButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg"
+                                Background="Transparent"
+                                CornerRadius="12"
+                                Padding="2">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                               VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#22FFFFFF" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#33FFFFFF" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Botão "enviar" da caixa de texto: circular, cor sólida, moderno -->
+        <Style x:Key="SendButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#4A69C9" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="16">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                               VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#5A79D9" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#3A59B9" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+    </Window.Resources>
+
+    <!--
+        Layout horizontal: [conteúdo à esquerda (balão/caixa de texto)] + [robô e teclado].
+        O StackPanel com VerticalAlignment="Center" nos dois lados garante que o balão
+        fique alinhado ao centro vertical do robô automaticamente, sem margens chutadas -
+        o próprio motor de layout do WPF resolve o alinhamento.
+    -->
+    <StackPanel Orientation="Horizontal"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom"
+                Margin="0,0,12,12">
+
+        <!-- Conteúdo à esquerda do robô: balão de feedback e caixa de digitação -->
+        <StackPanel Orientation="Vertical"
+                    VerticalAlignment="Center"
+                    Margin="0,0,14,0">
+
+            <!-- Balão de feedback ("Entendi: abrindo YouTube...") -->
+            <Border x:Name="FeedbackBubble"
+                    Background="#FFFFFF"
+                    CornerRadius="14"
+                    Padding="12,8"
+                    Margin="0,0,0,8"
+                    Visibility="Collapsed"
+                    MaxWidth="260"
+                    HorizontalAlignment="Right">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.22" />
+                </Border.Effect>
+                <TextBlock x:Name="FeedbackText"
+                           TextWrapping="Wrap"
+                           FontSize="13"
+                           Foreground="#222222" />
+            </Border>
+
+            <!-- Caixa de digitação (fallback para quem não tem/não quer usar microfone) -->
+            <Border x:Name="TextInputPanel"
+                    Background="#FFFFFF"
+                    CornerRadius="20"
+                    Padding="4"
+                    Visibility="Collapsed"
+                    HorizontalAlignment="Right"
+                    Width="260">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.22" />
+                </Border.Effect>
+                <DockPanel>
+                    <Button x:Name="SendTextButton"
+                            DockPanel.Dock="Right"
+                            Content="➤"
+                            Width="32" Height="32"
+                            Style="{StaticResource SendButtonStyle}"
+                            Click="SendTextButton_Click" />
+                    <TextBox x:Name="CommandTextBox"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             Padding="10,6"
+                             VerticalContentAlignment="Center"
+                             FontSize="14"
+                             KeyDown="CommandTextBox_KeyDown" />
+                </DockPanel>
+            </Border>
+
+        </StackPanel>
+
+        <!--
+            Robozinho ao centro, com os botões distribuídos ao redor:
+            [ ]  [minimizar]  [ ]
+            [teclado] [ROBÔ] [git]
+
+            Um Grid de 3 colunas x 2 linhas resolve o posicionamento sozinho, sem
+            margens "chutadas" - cada botão ocupa sua própria célula e fica alinhado
+            por construção, não por tentativa e erro de pixels.
+        -->
+        <Grid VerticalAlignment="Bottom">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- ACIMA: minimizar para a bandeja do sistema -->
+            <Button x:Name="MinimizeButton"
+                    Grid.Row="0" Grid.Column="1"
+                    Width="72" Height="36"
+                    HorizontalAlignment="Center"
+                    Margin="0,0,0,2"
+                    Style="{StaticResource IconButtonStyle}"
+                    Click="MinimizeButton_Click"
+                    ToolTip="Minimizar (continua rodando na bandeja)">
+                <Image Source="Assets/minimize_icon.png" Stretch="Uniform" Width="23" />
+            </Button>
+
+            <!-- ESQUERDA: ícone de teclado, alterna a caixa de texto -->
+            <Button x:Name="KeyboardToggleButton"
+                    Grid.Row="1" Grid.Column="0"
+                    Width="36" Height="36"
+                    VerticalAlignment="Center"
+                    Margin="0,0,4,0"
+                    Style="{StaticResource IconButtonStyle}"
+                    Click="KeyboardToggleButton_Click"
+                    ToolTip="Digitar um comando">
+                <Image Source="Assets/keyboard_icon.png" Stretch="Uniform" />
+            </Button>
+
+            <!-- CENTRO: robô, clique ativa/desativa o microfone -->
+            <Grid Grid.Row="1" Grid.Column="1">
+                <Button x:Name="RobotButton"
+                        Width="90" Height="90"
+                        Style="{StaticResource IconButtonStyle}"
+                        Click="RobotButton_Click"
+                        ToolTip="Clique para falar comigo">
+                    <Image x:Name="RobotImage" Source="Assets/robot_idle.png" Stretch="Uniform" />
+                </Button>
+
+                <!-- Indicador de "ouvindo", sobreposto ao robô -->
+                <Ellipse x:Name="ListeningIndicator"
+                         Width="14" Height="14"
+                         Fill="#4CAF50"
+                         HorizontalAlignment="Right" VerticalAlignment="Top"
+                         Margin="0,6,6,0"
+                         Visibility="Collapsed"
+                         Panel.ZIndex="3" />
+            </Grid>
+
+            <!-- DIREITA: ícone de Git, abre o fluxo de sincronização -->
+            <Button x:Name="GitSyncButton"
+                    Grid.Row="1" Grid.Column="2"
+                    Width="36" Height="36"
+                    VerticalAlignment="Center"
+                    Margin="4,0,0,0"
+                    Style="{StaticResource IconButtonStyle}"
+                    Click="GitSyncButton_Click"
+                    ToolTip="Sincronizar projeto atual com o GitHub">
+                <Image Source="Assets/git_icon.png" Stretch="Uniform" />
+            </Button>
+        </Grid>
+    </StackPanel>
+</Window>

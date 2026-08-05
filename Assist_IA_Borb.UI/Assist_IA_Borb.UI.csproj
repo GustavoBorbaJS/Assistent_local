@@ -1,0 +1,46 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <!-- Necessário para o NotifyIcon (ícone na bandeja do sistema) - o WPF não tem
+         um componente nativo equivalente, então usamos o do WinForms. É uma prática
+         comum e suportada; não muda o fato de a UI ser WPF. -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <ApplicationIcon>Assets/app_icon.ico</ApplicationIcon>
+
+    <!--
+ 
+    -->
+    <PublishAot>false</PublishAot>
+    <UserSecretsId>eb6342b0-357e-4ad2-9f7e-50798afe050e</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Assist_IA_Borb.Core\Assist_IA_Borb.Core.csproj" />
+    <ProjectReference Include="..\Assist_IA_Borb.Handlers\Assist_IA_Borb.Handlers.csproj" />
+    <ProjectReference Include="..\Assist_IA_Borb.Speech\Assist_IA_Borb.Speech.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <Resource Include="Assets\*.png" />
+    <!-- Os .svg ficam só como fonte/arquivo de edição (ex: reabrir no Inkscape/Figma) -->
+    <None Include="Assets\*.svg" />
+  </ItemGroup>
+
+</Project>
