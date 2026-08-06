@@ -19,8 +19,12 @@ public sealed class LocalKeywordIntentClassifier : IIntentClassifier
     private static readonly string[] AnotacaoTriggers =
         ["anota que", "anota ", "anotação", "cria uma nota", "cria nota", "lembrete", "escreve que", "escreve aí que"];
 
+    private static readonly string[] AlarmeTriggers =
+        ["alarme", "despertador", "me acorda", "me acorde", "me desperta"];
+
     private static readonly string[] AgendaTriggers =
-        ["agenda ", "agendar", "marca uma consulta", "marca um compromisso", "compromisso"];
+        ["agenda ", "agende", "agendar", "marca uma", "marque uma", "marca um", "marque um",
+         "reunião", "reuniao", "consulta", "compromisso"];
 
     private static readonly string[] YoutubeTriggers =
         ["youtube", "vídeo de", "video de", "toca ", "assistir", "assiste "];
@@ -49,6 +53,13 @@ public sealed class LocalKeywordIntentClassifier : IIntentClassifier
 
         if (TryMatch(normalized, raw, AnotacaoTriggers, out var anotacaoQuery))
             return Result("anotacao", anotacaoQuery, raw);
+
+        // Alarme ANTES de agenda: "me acorda às 7" é alarme, não compromisso.
+        // Nos dois casos o texto vai com os gatilhos removidos mas com a expressão de
+        // data/hora intacta - quem faz a interpretação temporal é o PtBrDateTimeParser
+        // dentro do handler, que também devolve o texto restante pra usar como título.
+        if (TryMatch(normalized, raw, AlarmeTriggers, out var alarmeQuery))
+            return Result("alarme", alarmeQuery, raw);
 
         if (TryMatch(normalized, raw, AgendaTriggers, out var agendaQuery))
             return Result("agenda", agendaQuery, raw);

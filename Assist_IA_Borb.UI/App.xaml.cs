@@ -24,7 +24,6 @@ public partial class App : Application
         // appsettings.json guarda só valores NÃO sensíveis (ex: URL do backend proxy, região da Azure).
         // Segredos (subscription key da Azure Speech, token de instalação) vêm de User Secrets
         // em desenvolvimento, e de variável de ambiente em produção. NUNCA committar chave real.
-        // em desenvolvimento, e de variável de ambiente em produção. NUNCA committar chave real.
         var configuration = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
             .AddJsonFile("appsettings.json", optional: false)
@@ -86,6 +85,8 @@ public partial class App : Application
         services.AddSingleton<ICommandHandler, GoogleCalendarHandler>();
         services.AddSingleton<ICommandHandler, SystemSettingsHandler>();
         services.AddSingleton<ICommandHandler, NoteHandler>();
+        services.AddSingleton<AlarmHandler>();
+        services.AddSingleton<ICommandHandler>(sp => sp.GetRequiredService<AlarmHandler>());
         services.AddSingleton<GitSyncHandler>(); // também usado direto pelo botão dedicado de Git
         services.AddSingleton<ICommandHandler>(sp => sp.GetRequiredService<GitSyncHandler>());
         services.AddSingleton<WebSearchHandler>(); // também usado como fallback explícito

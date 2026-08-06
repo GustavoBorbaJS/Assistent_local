@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Input;
 using Assist_IA_Borb.Core;
+using Assist_IA_Borb.Handlers;
 using Assist_IA_Borb.Speech;
 
 // Aliases explícitos: com UseWindowsForms habilitado (necessário pro NotifyIcon da
@@ -17,15 +18,21 @@ public partial class MainWindow : Window
     private readonly CommandRouter _router;
     private readonly IVoiceRecognitionService _voiceService;
     private readonly GitSyncHandler _gitSyncHandler;
+    private readonly AlarmHandler _alarmHandler;
     private System.Windows.Forms.NotifyIcon? _trayIcon;
 
-    public MainWindow(CommandRouter router, IVoiceRecognitionService voiceService, GitSyncHandler gitSyncHandler)
+    public MainWindow(CommandRouter router, IVoiceRecognitionService voiceService, GitSyncHandler gitSyncHandler, AlarmHandler alarmHandler)
     {
         InitializeComponent();
 
         _router = router;
         _voiceService = voiceService;
         _gitSyncHandler = gitSyncHandler;
+        _alarmHandler = alarmHandler;
+
+        // O alarme roda fora da thread de UI, então o resultado volta por evento.
+        _alarmHandler.OnResult += message =>
+            Dispatcher.Invoke(() => ShowFeedback(message));
 
         _router.OnFeedback += message => ShowFeedback(message);
         _voiceService.OnRecognizing += ShowPartialFeedback;
