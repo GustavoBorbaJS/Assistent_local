@@ -121,6 +121,7 @@ public sealed class GitSyncHandler : ICommandHandler
         if (!isRepo)
         {
             await RunGitAsync(projectPath, "init", cancellationToken);
+            GitIgnoreHelper.EnsureDefaultGitIgnore(projectPath);
         }
 
         // -----------------------------------------------------------------------
@@ -223,6 +224,34 @@ public sealed class GitSyncHandler : ICommandHandler
             if (renameResult.ExitCode != 0)
             {
                 await RunGitAsync(projectPath, "checkout -b main", cancellationToken);
+            }
+        }
+
+        // -----------------------------------------------------------------------
+        // PULL antes do push: o motivo #1 de "src refspec main does not match" /
+        // "rejected (non-fast-forward)" é o remote ter commits que o repositório local
+        // não tem (ex: README criado direto no GitHub, ou push feito de outra máquina).
+        // Faz sentido só tentar se o repositório já existia e já tinha remote ANTES
+        // dessa sincronização - um repo/remote recém-criados não têm nada pra puxar,
+        // e tentar mesmo assim só geraria um erro inofensivo de "sem histórico comum",
+        // que é detectado e ignorado abaixo.
+        // -----------------------------------------------------------------------
+        if (isRepo && hasRemote)
+        {
+            var pullResult = await RunGitAsync(projectPath, "pull --rebase origin main", cancellationToken);
+            var noCommonHistory =
+                pullResult.StandardError.Contains("couldn't find remote ref", StringComparison.OrdinalIgnoreCase) ||
+                pullResult.StandardError.Contains("does not exist", StringComparison.OrdinalIgnoreCase) ||
+                pullResult.StandardError.Contains("unrelated histories", StringComparison.OrdinalIgnoreCase);
+
+            if (pullResult.ExitCode != 0 && !noCommonHistory)
+            {
+                await RunGitAsync(projectPath, "rebase --abort", cancellationToken);
+                ShowMessage(
+                    "Não consegui sincronizar automaticamente com o GitHub - existem alterações " +
+                    "remotas que conflitam com as locais:\n\n" + pullResult.StandardError.Trim() +
+                    "\n\nAbra o projeto no VS Code e resolva o conflito manualmente, depois tente de novo.");
+                return;
             }
         }
 

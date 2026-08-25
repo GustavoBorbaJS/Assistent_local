@@ -116,8 +116,23 @@
         <TextBox x:Name="CommitOutput" Style="{StaticResource CodeBox}"
                  Visibility="Collapsed" Margin="0,4,0,0" />
 
-        <!-- Passo 4: Push -->
-        <TextBlock Text="PASSO 4 — Enviar para o GitHub (git push)" Style="{StaticResource StepLabel}" />
+        <!-- Passo 4: Pull -->
+        <TextBlock Text="PASSO 4 — Buscar atualizações do GitHub (git pull)" Style="{StaticResource StepLabel}" />
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox x:Name="PullOutput" Grid.Column="0" Style="{StaticResource CodeBox}"
+                     Text="Recomendado antes de enviar, especialmente se outra máquina também sincroniza este projeto."
+                     MinHeight="36" />
+            <Button x:Name="PullButton" Grid.Column="1" Content="Buscar"
+                    Style="{StaticResource ActionButton}" Margin="8,0,0,0"
+                    Click="PullButton_Click" />
+        </Grid>
+
+        <!-- Passo 5: Push -->
+        <TextBlock Text="PASSO 5 — Enviar para o GitHub (git push)" Style="{StaticResource StepLabel}" />
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />

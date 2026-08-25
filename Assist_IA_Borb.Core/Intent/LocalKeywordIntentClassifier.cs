@@ -19,6 +19,14 @@ public sealed class LocalKeywordIntentClassifier : IIntentClassifier
     private static readonly string[] AnotacaoTriggers =
         ["anota que", "anota ", "anotação", "cria uma nota", "cria nota", "lembrete", "escreve que", "escreve aí que"];
 
+    private static readonly string[] ListarAlarmesTriggers =
+        ["que alarmes", "quais alarmes", "meus alarmes", "listar alarmes", "lista de alarmes", "liste os alarmes"];
+
+    private static readonly string[] CancelarAlarmeTriggers =
+        ["cancela o alarme", "cancelar o alarme", "cancela alarme", "cancelar alarme",
+         "apaga o alarme", "apagar o alarme", "remove o alarme", "remover o alarme",
+         "desativa o alarme", "desativar o alarme"];
+
     private static readonly string[] AlarmeTriggers =
         ["alarme", "despertador", "me acorda", "me acorde", "me desperta"];
 
@@ -53,6 +61,15 @@ public sealed class LocalKeywordIntentClassifier : IIntentClassifier
 
         if (TryMatch(normalized, raw, AnotacaoTriggers, out var anotacaoQuery))
             return Result("anotacao", anotacaoQuery, raw);
+
+        // Listar/cancelar alarme ANTES do gatilho genérico de alarme: "cancela o alarme"
+        // também contém a palavra "alarme", então perderia pro trigger genérico se
+        // checado depois.
+        if (TryMatch(normalized, raw, ListarAlarmesTriggers, out var listarQuery))
+            return Result("listaralarmes", listarQuery, raw);
+
+        if (TryMatch(normalized, raw, CancelarAlarmeTriggers, out var cancelarQuery))
+            return Result("cancelaralarme", cancelarQuery, raw);
 
         // Alarme ANTES de agenda: "me acorda às 7" é alarme, não compromisso.
         // Nos dois casos o texto vai com os gatilhos removidos mas com a expressão de

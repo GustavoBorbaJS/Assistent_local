@@ -34,6 +34,11 @@ public partial class MainWindow : Window
         _alarmHandler.OnResult += message =>
             Dispatcher.Invoke(() => ShowFeedback(message));
 
+        // Canal compartilhado usado por handlers "de fundo" sem referência direta à
+        // janela (listar/cancelar alarme, fallback de busca de app não encontrado, etc).
+        Assist_IA_Borb.Core.AssistantFeedback.Raised += message =>
+            Dispatcher.Invoke(() => ShowFeedback(message));
+
         _router.OnFeedback += message => ShowFeedback(message);
         _voiceService.OnRecognizing += ShowPartialFeedback;
         _voiceService.OnRecognized += HandleVoiceRecognized;

@@ -50,6 +50,8 @@ public sealed class CommandRouter
         "sistema" => "abrindo no computador",
         "anotacao" => "criando uma anotação sobre",
         "alarme" => "criando um alarme",
+        "listaralarmes" => "consultando seus alarmes",
+        "cancelaralarme" => "cancelando o alarme",
         "git" => "sincronizando o projeto com o GitHub",
         "pesquisa" => "pesquisando",
         _ => "pesquisando"

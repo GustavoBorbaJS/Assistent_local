@@ -87,6 +87,8 @@ public partial class App : Application
         services.AddSingleton<ICommandHandler, NoteHandler>();
         services.AddSingleton<AlarmHandler>();
         services.AddSingleton<ICommandHandler>(sp => sp.GetRequiredService<AlarmHandler>());
+        services.AddSingleton<ICommandHandler, ListAlarmsHandler>();
+        services.AddSingleton<ICommandHandler, CancelAlarmHandler>();
         services.AddSingleton<GitSyncHandler>(); // também usado direto pelo botão dedicado de Git
         services.AddSingleton<ICommandHandler>(sp => sp.GetRequiredService<GitSyncHandler>());
         services.AddSingleton<WebSearchHandler>(); // também usado como fallback explícito

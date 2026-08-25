@@ -48,6 +48,8 @@ public partial class GitFlowWindow : Window
                 AddButton.IsEnabled = false;
                 return;
             }
+
+            GitIgnoreHelper.EnsureDefaultGitIgnore(_projectPath);
         }
 
         // Elimina os warnings de LF/CRLF que poluem a saída do add (não é erro real,
@@ -285,7 +287,46 @@ public partial class GitFlowWindow : Window
     }
 
     // ─────────────────────────────────────────────
-    //  Passo 4 — git push
+    //  Passo 4 — git pull
+    // ─────────────────────────────────────────────
+
+    private async void PullButton_Click(object sender, RoutedEventArgs e)
+    {
+        PullButton.IsEnabled = false;
+
+        var remoteCheck = await RunGitAsync("remote");
+        if (string.IsNullOrWhiteSpace(remoteCheck.Stdout))
+        {
+            PullOutput.Text = "Nenhum repositório remoto configurado ainda - configure no envio (Passo 5) primeiro.";
+            PullButton.IsEnabled = true;
+            return;
+        }
+
+        PullOutput.Text = $"Abrindo terminal para buscar atualizações de origin/{_currentBranch}...\n" +
+                          "Autentique-se na janela que abrir se solicitado.";
+        PullOutput.Foreground = new SolidColorBrush(Color.FromRgb(200, 211, 245));
+
+        // Mesmo motivo do push: usa terminal visível pra permitir autenticação do
+        // Git Credential Manager em repositórios privados.
+        var success = await RunGitInVisibleTerminalAsync($"pull --rebase origin {_currentBranch}");
+
+        if (success)
+        {
+            PullOutput.Text = "✓ Comando de busca executado. Verifique o terminal para conferir se houve conflito.";
+            PullOutput.Foreground = new SolidColorBrush(Color.FromRgb(80, 200, 120));
+            await RefreshStatusAsync();
+        }
+        else
+        {
+            PullOutput.Text = "Não foi possível abrir o terminal para buscar atualizações.";
+            PullOutput.Foreground = new SolidColorBrush(Color.FromRgb(255, 100, 100));
+        }
+
+        PullButton.IsEnabled = true;
+    }
+
+    // ─────────────────────────────────────────────
+    //  Passo 5 — git push
     // ─────────────────────────────────────────────
 
     private async void PushButton_Click(object sender, RoutedEventArgs e)

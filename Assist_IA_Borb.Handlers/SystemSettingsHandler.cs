@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Assist_IA_Borb.Core;
 using Assist_IA_Borb.Core.Handlers;
 
 namespace Assist_IA_Borb.Handlers;
@@ -7,6 +8,12 @@ namespace Assist_IA_Borb.Handlers;
 /// Abre painéis de configuração do Windows (ms-settings:), aplicativos conhecidos
 /// específicos (VS Code, Visual Studio, Antigravity, AnyDesk, Parsec, WhatsApp) ou
 /// tenta iniciar qualquer outro app pelo nome, com base no que o classificador extraiu.
+///
+/// Ordem de resolução, da mais rápida/confiável pra mais genérica: cache de buscas
+/// anteriores -> configuração do Windows -> apps conhecidos com lógica dedicada ->
+/// registro "App Paths" do Windows -> nome literal -> varredura do PATH -> atalho do
+/// Menu Iniciar -> pesquisa na web como último recurso (com aviso explícito pro usuário
+/// de que o app não foi encontrado instalado).
 /// </summary>
 public sealed class SystemSettingsHandler : ICommandHandler
 {
@@ -120,49 +127,73 @@ public sealed class SystemSettingsHandler : ICommandHandler
             }
         }
 
-        // 2) Apps conhecidos de uso pessoal
-        var matchedApp = KnownApps.FirstOrDefault(app =>
-            string.Equals(app.CanonicalKey, normalized, StringComparison.OrdinalIgnoreCase) ||
-            app.Aliases.Any(alias => normalized.Contains(alias, StringComparison.OrdinalIgnoreCase)));
-
-        if (matchedApp is not null && TryLaunchKnownApp(matchedApp))
+        // 2) Cache de uma busca anterior bem-sucedida pra esse mesmo termo - evita
+        // repetir a varredura de PATH/Menu Iniciar toda vez que o mesmo app é pedido.
+        var cached = AppLocationCache.TryGet(normalized);
+        if (cached is not null && TryStart(cached))
         {
             return Task.CompletedTask;
         }
 
-        // 3) Qualquer outro app - tenta abrir pelo nome literal (cobre apps registrados
-        // exatamente no PATH ou em "App Paths" do Windows)
+        // 3) Apps conhecidos de uso pessoal
+        var matchedApp = KnownApps.FirstOrDefault(app =>
+            string.Equals(app.CanonicalKey, normalized, StringComparison.OrdinalIgnoreCase) ||
+            app.Aliases.Any(alias => normalized.Contains(alias, StringComparison.OrdinalIgnoreCase)));
+
+        if (matchedApp is not null && TryLaunchKnownApp(matchedApp, normalized))
+        {
+            return Task.CompletedTask;
+        }
+
+        // 4) Registro "App Paths" do Windows - cobre a maioria dos apps de terceiros
+        // instalados normalmente (Chrome, Spotify, Steam, Discord, VLC, Office, etc.)
+        // sem precisar cadastrar cada um manualmente na lista de apps conhecidos.
+        var registryMatch = AppPathsFinder.FindByNameContains(normalized);
+        if (registryMatch is not null && TryStart(registryMatch))
+        {
+            AppLocationCache.Save(normalized, registryMatch);
+            return Task.CompletedTask;
+        }
+
+        // 5) Qualquer outro app - tenta abrir pelo nome literal (cobre comandos já
+        // registrados exatamente no PATH do sistema)
         if (TryStart(normalized))
         {
             return Task.CompletedTask;
         }
 
-        // 4) Varre todas as pastas do PATH atrás de um executável cujo nome CONTENHA
+        // 6) Varre todas as pastas do PATH atrás de um executável cujo nome CONTENHA
         // o termo pedido - cobre ferramentas de linha de comando com nome parecido,
         // mas não idêntico, ao que a pessoa falou (ex: pediu "claude" e o executável
         // real chama-se claude.exe numa pasta custom do PATH).
         var pathMatch = PathExecutableFinder.FindByNameContains(normalized);
         if (pathMatch is not null && TryStart(pathMatch))
         {
+            AppLocationCache.Save(normalized, pathMatch);
             return Task.CompletedTask;
         }
 
-        // 5) Última tentativa: procurar um atalho no Menu Iniciar com esse nome -
+        // 7) Última tentativa: procurar um atalho no Menu Iniciar com esse nome -
         // cobre apps com interface gráfica, que normalmente não entram no PATH.
         var shortcutTarget = ShortcutFinder.FindByNameContains([normalized]);
         if (shortcutTarget is not null && TryStart(shortcutTarget))
         {
+            AppLocationCache.Save(normalized, shortcutTarget);
             return Task.CompletedTask;
         }
 
-        // Nada funcionou: cai para pesquisa web sobre o termo, melhor mostrar
-        // algo útil do que travar/dar erro pro usuário.
+        // Nada funcionou: avisa a pessoa explicitamente (em vez de silenciosamente cair
+        // pra web) e pesquisa o termo no navegador padrão - melhor mostrar algo útil do
+        // que travar/dar erro.
+        AssistantFeedback.Notify(
+            $"Não encontrei o aplicativo \"{normalized}\" instalado. Pesquisando na web sobre isso...");
+
         var fallbackUrl = $"https://www.google.com/search?q={Uri.EscapeDataString(normalized)}";
         YouTubeHandler.OpenInDefaultBrowser(fallbackUrl);
         return Task.CompletedTask;
     }
 
-    private static bool TryLaunchKnownApp(KnownApp app)
+    private static bool TryLaunchKnownApp(KnownApp app, string searchTermForCache)
     {
         if (app.SpecialLauncher is not null && app.SpecialLauncher())
         {
@@ -179,6 +210,7 @@ public sealed class SystemSettingsHandler : ICommandHandler
             var expanded = Environment.ExpandEnvironmentVariables(candidate);
             if (File.Exists(expanded) && TryStart(expanded))
             {
+                AppLocationCache.Save(searchTermForCache, expanded);
                 return true;
             }
         }
@@ -188,8 +220,21 @@ public sealed class SystemSettingsHandler : ICommandHandler
             return true;
         }
 
+        var registryMatch = AppPathsFinder.FindByNameContains(app.CanonicalKey);
+        if (registryMatch is not null && TryStart(registryMatch))
+        {
+            AppLocationCache.Save(searchTermForCache, registryMatch);
+            return true;
+        }
+
         var shortcutTarget = ShortcutFinder.FindByNameContains(app.ShortcutSearchTerms);
-        return shortcutTarget is not null && TryStart(shortcutTarget);
+        if (shortcutTarget is not null && TryStart(shortcutTarget))
+        {
+            AppLocationCache.Save(searchTermForCache, shortcutTarget);
+            return true;
+        }
+
+        return false;
     }
 
     private static bool TryStart(string fileName)
