@@ -39,6 +39,11 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <Resource Include="Assets\*.png" />
+    <!-- Embutido como recurso do WPF (não só como ApplicationIcon do .exe) porque o
+         ícone da bandeja (NotifyIcon) é carregado em runtime via pack URI - sem isso,
+         SetupTrayIcon() não achava o arquivo (ApplicationIcon só define o ícone do
+         próprio .exe no Explorer/barra de tarefas, não copia nem embute o .ico). -->
+    <Resource Include="Assets\app_icon.ico" />
     <!-- Os .svg ficam só como fonte/arquivo de edição (ex: reabrir no Inkscape/Figma) -->
     <None Include="Assets\*.svg" />
   </ItemGroup>

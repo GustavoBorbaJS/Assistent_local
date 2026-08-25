@@ -64,13 +64,9 @@ public partial class MainWindow : Window
     /// </summary>
     private void SetupTrayIcon()
     {
-        var iconPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "app_icon.ico");
-
         _trayIcon = new System.Windows.Forms.NotifyIcon
         {
-            Icon = System.IO.File.Exists(iconPath)
-                ? new System.Drawing.Icon(iconPath)
-                : System.Drawing.SystemIcons.Application,
+            Icon = LoadAppIcon(),
             Visible = true,
             Text = "Assist_IA_Borb"
         };
@@ -90,6 +86,34 @@ public partial class MainWindow : Window
         menu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
         menu.Items.Add("Fechar", null, (_, _) => ExitApplication());
         _trayIcon.ContextMenuStrip = menu;
+    }
+
+    /// <summary>
+    /// Carrega o ícone da bandeja a partir do recurso embutido do WPF (pack URI) -
+    /// diferente do XAML (Image.Source), o NotifyIcon do WinForms não sabe resolver
+    /// "Assets/app_icon.ico" sozinho, então o stream precisa ser obtido manualmente.
+    /// Usar o recurso embutido em vez de ler do disco (AppContext.BaseDirectory) evita
+    /// depender do .ico estar fisicamente copiado pra pasta de saída - ele já vai
+    /// embutido dentro do próprio .exe/.dll, então funciona igual em debug, publish
+    /// normal ou publish single-file.
+    /// </summary>
+    private static System.Drawing.Icon LoadAppIcon()
+    {
+        try
+        {
+            var resourceUri = new Uri("pack://application:,,,/Assets/app_icon.ico", UriKind.Absolute);
+            var streamInfo = Application.GetResourceStream(resourceUri);
+            if (streamInfo is not null)
+            {
+                return new System.Drawing.Icon(streamInfo.Stream);
+            }
+        }
+        catch
+        {
+            // Cai pro fallback abaixo - preferível a bandeja sem ícone customizado a travar.
+        }
+
+        return System.Drawing.SystemIcons.Application;
     }
 
     private void MinimizeButton_Click(object sender, RoutedEventArgs e) => MinimizeToTray();
