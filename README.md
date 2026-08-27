@@ -1,6 +1,6 @@
 # Assist_IA_Borb — esqueleto do projeto
 
-Assistente flutuante para Windows (WPF), voltado a idosos e pessoas com
+Assistente flutuante para Windows (WPF), voltado a pessoas com
 dificuldade de usar o sistema, com comando de voz como entrada principal
 e digitação como fallback.
 
@@ -62,25 +62,3 @@ dotnet run
 cd src/Assist_IA_Borb.UI
 dotnet run
 ```
-
-## Checklist de segurança antes de distribuir publicamente
-
-- [ ] Nenhuma chave em `appsettings.json` versionado no Git (só placeholders).
-- [ ] `DEEPSEEK_API_KEY` só existe no ambiente do servidor Proxy.
-- [ ] Rate limiting no Proxy ativo (evita abuso da conta trial).
-- [ ] Build de distribuição com `PublishAot=true` (dificulta decompilação).
-- [ ] Passar o binário final por um obfuscador gratuito (ex: ConfuserEx) como
-      camada extra, mesmo com AOT.
-- [ ] Testar o app sem internet (deve degradar pra "não entendi, tente
-      digitar" em vez de travar — importante pro público-alvo).
-
-## Próximos passos sugeridos
-
-1. Implementar `InstalledAppsIndexer` (Core/Handlers) para buscar entre
-   atalhos do Menu Iniciar quando o comando não bate com nada específico.
-2. Testes manuais de posicionamento em telas com escala diferente
-   (100%/125%/150% no Windows) — `SystemParameters.WorkArea` já lida com
-   DPI, mas vale confirmar visualmente.
-3. Ajustar o `SystemPrompt` do `Assist_IA_Borb.Proxy/Program.cs` conforme os
-   erros de classificação aparecerem no uso real (o log já registra quando
-   o DeepSeek foge do formato JSON esperado).
